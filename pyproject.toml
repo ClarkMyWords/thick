@@ -7,6 +7,9 @@ authors = [{name = "Clark Hensley", email = "clarkhensley@duck.com"}]
 maintainers = [{name = "Clark Hensley", email = "clarkhensley@duck.com"}]
 dynamic = ["version"]
 
+[project.urls]
+"Source" = "https://github.com/ClarkMyWords/thick"
+
 [tool.setuptools.dynamic]
 version = {attr = "thick.__version__"}
 
