@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
-from typing import Mapping, Collection, Any, Iterator
+from typing import Mapping, Any, Iterator, Iterable
 from collections import UserDict
 from collections.abc import Set, KeysView, ItemsView, ValuesView
 
@@ -10,10 +10,10 @@ class ThickKey(Set):
     """A custom \"key\" for a Thick dict. Effectively a frozenset implementation
     with a custom repr."""
 
-    def __init__(self, d: Collection) -> None:
+    def __init__(self, d: Any) -> None:
         """wraps around a frozenset, the input data can be
-        any Collection type"""
-        if isinstance(d, str) and len(d) > 1:
+        any type, will be cast to a Collection"""
+        if (isinstance(d, str) and len(d) > 1) or not isinstance(d, Iterable):
             d = (d,)
         self.data: frozenset[Any] = frozenset(d)
         super().__init__()
@@ -264,11 +264,30 @@ class Thick(UserDict):
 
         raise KeyError(key)
 
-    def get(self, key: Any, default: Any = None) -> Any:
-        try:
-            return self[key]
-        except KeyError:
-            return default
+    def reverse(self) -> Thick:
+        """Because the Thick is required to have exactly one
+        instance of each value, it is easy to create a \"reversed\"
+        Thick, where the values become keys, and keys values
+        """
+        new: Thick = Thick()
+        key: ThickKey
+        value: Any
+        for key, value in self.items():
+            new[value] = key
+
+        return new
+
+    def get_dict(self) -> dict[Any, Any]:
+        """Get something like the underlying dict of the Thick,
+        though cast any ThickKey items to tuples."""
+        return_dict: dict[Any, Any] = {}
+        for key, value in self.items():
+            if len(key) > 1:
+                return_dict[tuple(key)] = value
+            else:
+                return_dict[tuple(key)[0]] = value
+
+        return return_dict
 
     def values(self) -> ThickValuesView:
         return ThickValuesView(self)
