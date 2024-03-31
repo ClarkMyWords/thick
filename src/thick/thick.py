@@ -6,12 +6,13 @@ from collections import UserDict
 from collections.abc import Set, KeysView, ItemsView, ValuesView
 
 
-# A custom "key" for a Thick dict.
-# Effectively a frozenset implementation
-# Except for a custom repr
 class ThickKey(Set):
-    # Should be identical to a frozenset except for the __repr__
+    """A custom \"key\" for a Thick dict. Effectively a frozenset implementation
+    with a custom repr."""
+
     def __init__(self, d: Collection) -> None:
+        """wraps around a frozenset, the input data can be
+        any Collection type"""
         if isinstance(d, str) and len(d) > 1:
             d = (d,)
         self.data: frozenset[Any] = frozenset(d)
@@ -27,41 +28,27 @@ class ThickKey(Set):
         return len(self.data)
 
     def __hash__(self) -> int:
+        """A ThickKey is a frozenset, thus it can (and must)
+        implement __hash__"""
         return self._hash()
 
     def __repr__(self) -> str:
+        """A custom __repr__ to show make the Thick{Keys | Values | Items}Views
+        look better"""
         # This makes the Thick*Views look better
-        return str(tuple(self.data))
+        return repr(tuple(self.data))
 
 
-# A Thick dict. Rather than growing downward (getting "longer"),
-# it grows outward (getting "Thicker").
-# In a normal dict, if you want to map "a" to "foo" and also "b" to "foo",
-# This looks like:
-# example_dict = {
-#   "a": "foo",
-#   "b": "foo",
-# }
-#
-# In a Thick dict, this looks instead like:
-# example_thick = Thick({
-# ("a", "b"): "foo"
-# })
-# But this key isn't just a tuple:
-# example_thick["a"]
-# > "foo"
-# example_thick["b"]
-# > "foo"
-# example_thick[("a", "b")]
-# > "foo"
 class Thick(UserDict):
+    """A dictionary where each value is deduplicated.
+    Effectively allows for mapping a Collection of values
+    to one output"""
+
     #####################################
     # Modified from collections.UserDict
     # vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-    def __init__(self, input_dict: Mapping | None = None, /, **kwargs) -> None:
-        # Because of a custom "update" method (as used in UserDict)
-        # This still creates a valid Thick dict
-        super().__init__(input_dict, **kwargs)
+
+    # Using UserDict's __init__ method works fine for us.
 
     def __or__(self, other: Any) -> Thick:
         if isinstance(other, UserDict | dict | Thick):
@@ -118,9 +105,13 @@ class Thick(UserDict):
     # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     # Modified from collections.UserDict
     #####################################
-    # (ADAPTED FROM collections.abc.MutableMapping)
+    # Modified from collections.abc.MutableMapping
     # vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+
     def __getitem__(self, key: Any) -> Any:
+        """Very similar to the reference implementation,
+        simply changed for type hinting and to get an entire
+        key from a partial key when necessary"""
         check_key: ThickKey
         if not isinstance(key, ThickKey):
             check_key = ThickKey(key)
@@ -136,10 +127,11 @@ class Thick(UserDict):
 
         raise KeyError(key)
 
-    # This is by far the most "involved" method in this
-    # data structure. The logic helps it ensure that it
-    # retains the structure of having unique values.
     def __setitem__(self, key: Any, item: Any) -> None:
+        """By far the most involved method of the data structure.
+        Effectively works to ensure that we retain the invariant
+        nature of the data structure: each value is entered once,
+        the keys are added or removed to the set as required."""
         check_key: ThickKey
         if not isinstance(key, ThickKey):
             check_key = ThickKey(key)
@@ -213,6 +205,9 @@ class Thick(UserDict):
         self.data[check_key] = item
 
     def __delitem__(self, key: Any) -> None:
+        """Very similar to the reference implementation,
+        simply changed for type hinting and to get an entire
+        key from a partial key when necessary"""
         check_key: ThickKey
         if not isinstance(key, ThickKey):
             check_key = ThickKey(key)
@@ -237,8 +232,8 @@ class Thick(UserDict):
         # already in the Thick dict, it's a key error
         raise KeyError(key)
 
-    # Given a partial or whole key, return the entire ThickKey:
     def get_entire_key(self, key: Any) -> ThickKey:
+        """Given a partial key, return the entire key."""
         check_key: ThickKey
         if not isinstance(key, ThickKey):
             check_key = ThickKey(key)
@@ -252,9 +247,9 @@ class Thick(UserDict):
 
         raise KeyError(key)
 
-    # Given a key or a subset of a key, remove the entire
-    # key and its value in one go
     def delete_entire_key(self, key: Any) -> None:
+        """Given a partial (or full) key, remove the entire
+        key and its value"""
         check_key: ThickKey
         if not isinstance(key, ThickKey):
             check_key = ThickKey(key)
@@ -284,12 +279,21 @@ class Thick(UserDict):
     def items(self) -> ThickItemsView:
         return ThickItemsView(self)
 
+    # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    # Modified from collections.abc.MutableMapping
+    #####################################
+
 
 class ThickKeysView(KeysView):
+    """A simple KeysView for this type of mapping with a custom repr"""
+
     # Type Hint for mypy
     _mapping: Thick
 
     def __contains__(self, key: Any) -> bool:
+        """This implementation is very important. By
+        checking in here on if an input key is either equal to
+        or a subset of the mapping's keys."""
         check_key: ThickKey
         if not isinstance(key, ThickKey):
             check_key = ThickKey(key)
@@ -308,18 +312,22 @@ class ThickKeysView(KeysView):
 
         return False
 
-    # Similar to a dict_keys __repr__
     def __repr__(self):
+        """Similar to a dict_keys __repr__"""
         return f"{self.__class__.__name__}({list(self._mapping.data.keys())})"
 
 
 class ThickValuesView(ValuesView):
-    # Similar to a dict_values __repr__
+    """A simple ValuesView for this type of mapping with a custom repr"""
+
     def __repr__(self):
+        """Similar to a dict_values __repr__"""
         return f"{self.__class__.__name__}({list(self._mapping.data.values())})"
 
 
 class ThickItemsView(ItemsView):
-    # Similar to a dict_items __repr__
+    """A simple ItemsView for this type of mapping with a custom repr"""
+
     def __repr__(self):
+        """Similar to a dict_items __repr__"""
         return f"{self.__class__.__name__}({list(zip(self._mapping.data.keys(), self._mapping.data.values()))})"
