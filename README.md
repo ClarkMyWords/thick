@@ -18,7 +18,8 @@ foo = {
     "b": ComplexObjectName2,
     "c": ComplexObjectName1,
     ...
-}```
+}
+```
 
 In this case, typing out such a dictionary, especially one with more entries, violates the DRY principle (a personal favorite) and can be quite error-prone.
 
@@ -28,7 +29,8 @@ foo = {
     ("a", "c", ...): ComplexObjectName1,
     ("b", ...): ComplexObjectName2,
     ...
-}```
+}
+```
 
 But, obviously, this breaks on a call like:
 ```py
@@ -108,6 +110,28 @@ True
 2 in my_thick_iterable_key
 False
 ```
+
+### But I just want the normal dictionary!
+Good news! You can use the more-simple, D.R.Y. method for construction, and then get the desired dict directly out!
+```py
+my_thick = Thick({
+    ("a", "b", "c"): foo,
+    ("d", "e", "f"): bar,
+    ...
+    })
+
+normal_dict = my_thick.thin()
+{
+    "a": foo,
+    "b": foo,
+    "c": foo,
+    "d": bar,
+    "e": bar,
+    "f": bar,
+    ...
+}
+```
+
 
 ## Is this really worth it?
 
