@@ -7,7 +7,7 @@ from collections.abc import Set, KeysView, ItemsView, ValuesView
 
 
 class ThickKey(Set):
-    """A custom \"key\" for a Thick dict. Effectively a frozenset implementation
+    """A custom "key" for a Thick dict. Effectively a frozenset implementation
     with a custom repr."""
 
     def __init__(self, d: Any) -> None:
@@ -266,7 +266,7 @@ class Thick(UserDict):
 
     def reverse(self) -> Thick:
         """Because the Thick is required to have exactly one
-        instance of each value, it is easy to create a \"reversed\"
+        instance of each value, it is easy to create a "reversed"
         Thick, where the values become keys, and keys values
         """
         new: Thick = Thick()
@@ -277,17 +277,14 @@ class Thick(UserDict):
 
         return new
 
-    def get_dict(self) -> dict[Any, Any]:
-        """Get something like the underlying dict of the Thick,
-        though cast any ThickKey items to tuples."""
-        return_dict: dict[Any, Any] = {}
+    def thin(self) -> dict[Any, Any]:
+        """Get the "thin" (i.e., not Thick) dictionary from the Thick. In essence, this "reduplicates" the dictionary."""
+        thin_dict: dict[Any, Any] = {}
         for key, value in self.items():
-            if len(key) > 1:
-                return_dict[tuple(key)] = value
-            else:
-                return_dict[tuple(key)[0]] = value
+            for k in key:
+                thin_dict[k] = value
 
-        return return_dict
+        return thin_dict
 
     def values(self) -> ThickValuesView:
         return ThickValuesView(self)
