@@ -51,7 +51,7 @@ my_thick = Thick({
 
 print(my_thick)
 
-{("a", "c", ...): ComplexObjectName1, ("b", ..): ComplexObjectName2, ...}
+{("a", "c", ...): ComplexObjectName1, ("b", ...): ComplexObjectName2, ...}
 ```
 
 However, those keys are not simple tuples, as such:
@@ -130,11 +130,27 @@ normal_dict = my_thick.thin()
     "f": bar,
     ...
 }
+
+# Or even just use the classmethod and skip the construction:
+normal_dict = Thick.make_thin({
+    ("a", "b", "c"): foo,
+    ("d", "e", "f"): bar, 
+    ...
+    })
+{
+    "a": foo,
+    "b": foo,
+    "c": foo,
+    "d": bar,
+    "e": bar,
+    "f": bar,
+    ...
+}
 ```
 
 
 ## Is this really worth it?
 
-Probably not! I intend to use this in a few of my other personal projects, but I also wanted some more experiencing putting up a pip/PyPI package, and I thought the name was fun (and a little risque, to be fair).
+Probably not! I intend to use this in a few of my other personal projects, but I also wanted some more experiencing putting up a pip/PyPI package, and I thought the name was fun.
 
 I don't expect anyone else to use this, but, if it does end up being useful, please let me know! If you find any bugs or have any feature requests, please create a GitHub issue!
