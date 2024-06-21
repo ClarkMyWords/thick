@@ -286,6 +286,11 @@ class Thick(UserDict):
 
         return thin_dict
 
+    @classmethod
+    def make_thin(cls, data: dict[Any, Any]) -> dict[Any, Any]:
+        """Automatically "reduplicate" a dict. That is, create the Thick and automatically call the thin() method on it."""
+        return cls(data).thin()
+
     def values(self) -> ThickValuesView:
         return ThickValuesView(self)
 
